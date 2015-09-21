@@ -7,6 +7,7 @@ package booksample;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -53,6 +54,43 @@ public class MySqlDb {
         return records;
     }
     
+    public int deleteRecordByPrimaryKey(Object key, String keyIdentifier, String tableName) throws SQLException {
+        
+        String sql = "";
+        
+        if (key instanceof String) {
+            sql = "DELETE FROM " + tableName + " WHERE " + keyIdentifier + " = '" + key + "'";
+        }
+        else {
+            sql = "DELETE FROM " + tableName + " WHERE " + keyIdentifier + " = " + key.toString();
+        }
+        
+        int updateCount = 0;
+        
+        Statement stmt = conn.createStatement();
+        updateCount = stmt.executeUpdate(sql);
+        
+        return updateCount;
+    }
+    
+    public int deleteRecordByPrimaryKeyPreparedStatement(Object key, String keyIdentifier, String tableName) throws SQLException {
+        PreparedStatement pstmt = null;
+        String sql = "DELETE FROM " + tableName + " WHERE " + keyIdentifier + " = ?";
+        
+        pstmt = conn.prepareStatement(sql);
+        
+        if (key instanceof String) {
+            pstmt.setString(1, key.toString());
+        }
+        else {
+            pstmt.setInt(1, (int)key);
+        }
+        
+        int updateCount = pstmt.executeUpdate();
+        
+        return updateCount;
+    }
+    
     public static void main(String[] args) throws Exception {
         MySqlDb db = new MySqlDb();
         db.openConnection("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/book2", "root", "admin");
@@ -61,6 +99,15 @@ public class MySqlDb {
         for (Map record : records) {
             System.out.println(record);
         }
+        
+        int updateCount = db.deleteRecordByPrimaryKey(1, "author_id", "author");
+        System.out.println("Deleted " + updateCount + " record(s)");
+        
+        records = db.findAllRecords("author");
+        for (Map record : records) {
+            System.out.println(record);
+        }
+        
         db.closeConnection();
     }
 }
