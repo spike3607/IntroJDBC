@@ -6,6 +6,7 @@
 package booksample;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -73,7 +74,7 @@ public class MySqlDb {
         return updateCount;
     }
     
-    public int deleteRecordByPrimaryKeyPreparedStatement(Object key, String keyIdentifier, String tableName) throws SQLException {
+    public int deleteRecordByPrimaryKeyPS(Object key, String keyIdentifier, String tableName) throws SQLException {
         PreparedStatement pstmt = null;
         String sql = "DELETE FROM " + tableName + " WHERE " + keyIdentifier + " = ?";
         
@@ -91,16 +92,67 @@ public class MySqlDb {
         return updateCount;
     }
     
+    public int insertRecordIntoTable(String tableName, List<String> columnNames, List<Object> values) throws SQLException {
+        PreparedStatement pstmt = null;
+        String sql = "INSERT INTO " + tableName + "("; //first_name,last_name)" + " VALUES('Billy','Carter')";
+        
+        for (int i = 0; i < columnNames.size(); i++) {
+            if (i == (columnNames.size()-1)) {
+               sql += columnNames.get(i) + ") VALUES(";
+            }
+            else {
+               sql += columnNames.get(i) + ",";               
+            }
+        }
+        
+        for (int i = 0; i < values.size(); i++) {
+            if (i == (values.size()-1)) {
+               sql += " ? )";
+            }
+            else {
+               sql += " ? ,";
+            }
+        }
+        
+        System.out.println(sql);
+        
+        pstmt = conn.prepareStatement(sql);
+        
+        for (int i = 0; i < values.size(); i++) {
+            pstmt.setObject(i+1, values.get(i));
+        }
+        
+        int updateCount = pstmt.executeUpdate();
+        
+        return updateCount;
+    }
+    
     public static void main(String[] args) throws Exception {
         MySqlDb db = new MySqlDb();
-        db.openConnection("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/book2", "root", "admin");
+        db.openConnection("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/book", "root", "admin");
         
         List<Map<String,Object>> records = db.findAllRecords("author");
         for (Map record : records) {
             System.out.println(record);
         }
         
-        int updateCount = db.deleteRecordByPrimaryKey(1, "author_id", "author");
+        ArrayList<String> newRecordColumns = new ArrayList<>();
+        newRecordColumns.add("author_name");
+        newRecordColumns.add("date_created");
+        
+        ArrayList<Object> newRecordValues = new ArrayList<>();
+        newRecordValues.add("Mike Schoenauer");
+        newRecordValues.add(new Date(15,4,19));
+        
+        int updateCount = db.insertRecordIntoTable("author",newRecordColumns,newRecordValues);
+        System.out.println("Added " + updateCount + " record(s)");
+        
+        records = db.findAllRecords("author");
+        for (Map record : records) {
+            System.out.println(record);
+        }
+        
+        updateCount = db.deleteRecordByPrimaryKeyPS(5, "author_id", "author");
         System.out.println("Deleted " + updateCount + " record(s)");
         
         records = db.findAllRecords("author");
