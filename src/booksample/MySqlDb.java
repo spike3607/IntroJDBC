@@ -127,6 +127,19 @@ public class MySqlDb {
         return updateCount;
     }
     
+    public int updateRecordByPrimaryKey(String tableName, String columnName, Object newValue, String keyIdentifier, Object key) throws SQLException {
+        PreparedStatement pstmt = null;
+        String sql = "UPDATE " + tableName + " SET " + columnName + " = ?, WHERE " + keyIdentifier + " = ?"; 
+        
+        pstmt = conn.prepareStatement(sql);
+        pstmt.setObject(1, newValue);
+        pstmt.setObject(2, key);
+        
+        int updateCount = pstmt.executeUpdate();
+        
+        return updateCount;
+    }
+    
     public static void main(String[] args) throws Exception {
         MySqlDb db = new MySqlDb();
         db.openConnection("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/book", "root", "admin");
